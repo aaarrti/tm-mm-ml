@@ -1,0 +1,6 @@
+dataset/k8s
+saved_data
+saved_models
+service/Makefile
+service/app/stubs
+service/.openapi-generator
