@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mm-ml-dataset
+  labels:
+    app.kubernetes.io/name: mm-ml-dataset
+  namespace: datahub-dev
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      serviceAccountName: datahub-dev
+      restartPolicy: Never
+      containers:
+        - name: dataset-job
+          image: 494112235724.dkr.ecr.eu-central-1.amazonaws.com/datahub/mm-ml:dev-dataset-job
+          command: [ 'python3', 'app/main.py', 'all' ]
+          env:
+            - name: S3_BUCKET_NAME
+              value: datahub-mm-ml
+            #- name: MONGO_URI
+            #  valueFrom:
+            #    secretKeyRef:
+            #      name: x
+            #      key: x
+            #      optional: false
+            #
+            #

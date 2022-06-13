@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: training-job
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      serviceAccountName: datahub-dev
+      restartPolicy: Never
+      tolerations:
+        - key: nodegroup
+          operator: Equal
+          value: gpu_support
+          effect: NoSchedule
+      nodeSelector:
+        nodegroup: gpu_support
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - gpu-test
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: train-job
+          image: 494112235724.dkr.ecr.eu-central-1.amazonaws.com/datahub/mm-ml:dev-train-job
+          env:
+            - name: S3_BUCKET_NAME
+              value: datahub-mm-ml
+            - name: S3_MODEL_DIR_PREFIX'
+              value: saved_models
