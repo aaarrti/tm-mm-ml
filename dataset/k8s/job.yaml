@@ -10,7 +10,7 @@ spec:
   parallelism: 1
   template:
     spec:
-      serviceAccountName: datahub-dev
+      serviceAccountName: mm-ml
       restartPolicy: Never
       containers:
         - name: dataset-job
@@ -19,11 +19,11 @@ spec:
           env:
             - name: S3_BUCKET_NAME
               value: datahub-mm-ml
-            #- name: MONGO_URI
-            #  valueFrom:
-            #    secretKeyRef:
-            #      name: x
-            #      key: x
-            #      optional: false
-            #
-            #
+            - name: DATA_PATH
+              value: /saved_data
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: dev-mm-ml-secret
+                  key: mongo-uri-dev
+                  optional: false

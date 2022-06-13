@@ -50,7 +50,7 @@ def upload_folder_to_s3(inputDir, s3Path):
         raise e
 
 
-def download_dir(prefix, local, bucket):
+def download_dir(prefix, local):
     """
     params:
     - prefix: pattern to match in s3
@@ -63,7 +63,7 @@ def download_dir(prefix, local, bucket):
     dirs = []
     next_token = ''
     base_kwargs = {
-        'Bucket': bucket,
+        'Bucket': S3_BUCKET_NAME,
         'Prefix': prefix,
     }
     while next_token is not None:
@@ -87,4 +87,4 @@ def download_dir(prefix, local, bucket):
         dest_pathname = os.path.join(local, k)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
-        __s3.download_file(bucket, k, dest_pathname)
+        __s3.download_file(S3_BUCKET_NAME, k, dest_pathname)

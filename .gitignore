@@ -13,3 +13,4 @@ demo.ipynb
 .ipynb_checkpoints
 test.py
 saved_data
+dataset/k8s/secret.yaml

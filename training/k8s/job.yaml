@@ -28,9 +28,19 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: train-job
+          resources:
+            requests:
+              memory: 10Gi
+              nvidia.com/gpu: '1'
+            limits:
+              memory: 20Gi
+              nvidia.com/gpu: '1'
           image: 494112235724.dkr.ecr.eu-central-1.amazonaws.com/datahub/mm-ml:dev-train-job
           env:
             - name: S3_BUCKET_NAME
               value: datahub-mm-ml
             - name: S3_MODEL_DIR_PREFIX'
               value: saved_models
+            - name: MODEL_DIR
+              value: /saved_models
+

@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 
+
 class TrainingHyperParameters:
     EPOCHS = 30
     BATCH_SIZE = 32

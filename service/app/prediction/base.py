@@ -3,6 +3,12 @@ import logging
 import tensorflow as tf
 from abc import ABC, abstractmethod
 from .config import *
+import pickle
+from pathlib import Path
+from typing import Dict
+
+from app.util import log_before
+from app.aws.s3 import download_dir
 from pathlib import Path
 from typing import Dict
 
@@ -20,11 +26,20 @@ class BasePredictor(ABC):
     @log_before
     def __init__(self, model_name: str):
         self.model = self._load_model(model_name)
+        self.name_mapping = self._load_pickled_label_map(
+            f'{MODEL_FS_CACHE_DIR}/{S3_MODEL_DIR_PREFIX}/{model_name}/{LABEL_MAPPING_NAME}')
         self.name_mapping = load_pickle(f'{MODEL_FS_CACHE_DIR}/{S3_MODEL_DIR_PREFIX}/{model_name}/{LABEL_MAPPING_NAME}')
 
     @abstractmethod
     def predict_batch(self, messages):
         pass
+
+    @staticmethod
+    @log_before
+    def _load_pickled_label_map(path) -> {int: str}:
+        with open(path, "rb") as file:
+            obj = pickle.load(file)
+            return obj
 
     @staticmethod
     @log_before

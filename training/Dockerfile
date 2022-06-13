@@ -5,4 +5,4 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-CMD ['python3', 'main.py', 'all']
+CMD ['python3', 'app/main.py', 'all']

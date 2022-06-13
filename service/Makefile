@@ -13,6 +13,6 @@ stubs:
 	-i openapi/api.yml \
 	-g python-flask \
 	--additional-properties=\
-	packageName=stubs,\
 	pythonSrcRoot=app,\
+	packageName=app.stubs,\
 	serverPort=9090

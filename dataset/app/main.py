@@ -9,13 +9,13 @@ from shared.aws.s3 import upload_folder_to_s3
 
 def update_ds(cls):
     ds = cls(cleaner=stop_words_removing_text_cleaner)
-    save_ds(name=ds.name,
-            train=ds.train,
-            val=ds.val,
-            class_weights=ds.class_weights,
-            label_mapping=ds.label_mapping
-            )
-    # upload_folder_to_s3()
+    path = save_ds(name=ds.name,
+                   train=ds.train,
+                   val=ds.val,
+                   class_weights=ds.class_weights,
+                   label_mapping=ds.label_mapping
+                   )
+    upload_folder_to_s3(inputDir=path, s3Path=path)
 
 
 @click.command()

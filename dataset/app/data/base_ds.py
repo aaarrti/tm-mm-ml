@@ -3,9 +3,9 @@ from pymongo import MongoClient
 from sklearn.model_selection import train_test_split
 from typing import List
 
-from preprocessing import TextCleaner
+from ..preprocessing import TextCleaner
 from .util import *
-from .config import MONGO_URI
+from ..config import MONGO_URI
 
 
 class Dataset(ABC):

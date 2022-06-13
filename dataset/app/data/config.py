@@ -1,7 +1,7 @@
-from os import environ
+from shared.util import env_or_def
 
 
-DATA_PATH = environ.get('DATA_PATH', '/Users/artemsereda/Documents/IdeaProjects/datahub-mm-ml/saved_data')
+DATA_PATH = '../../saved_data'
 
-MONGO_URI = environ['MONGO_URI']
+MONGO_URI = env_or_def('MONGO_URI')
 

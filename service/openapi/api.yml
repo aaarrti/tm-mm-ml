@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   version: "1.0.0"
   title: "MM ML"
-basePath: "/api/v1"
+basePath: "/api/06.2022:10:00"
 tags:
   - name: mm-ml
 schemes:
