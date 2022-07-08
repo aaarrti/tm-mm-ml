@@ -14,3 +14,4 @@ demo.ipynb
 test.py
 saved_data
 dataset/k8s/secret.yaml
+.DS_Store
