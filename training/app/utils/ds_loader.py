@@ -1,13 +1,12 @@
 from typing import Dict
 import tensorflow as tf
 
-from shared.util import load_pickle
+from shared.util import load_pickle, log_before
 from dataclasses import dataclass
 
 
 @dataclass
 class Dataset:
-    BATCH_SIZE = 32
     SHUFFLE_SIZE = 100
     name: str
     num_classes: int
@@ -17,25 +16,26 @@ class Dataset:
     val: tf.data.Dataset
 
 
-def configure_ds(ds: tf.data.Dataset):
-    return ds.shuffle(Dataset.SHUFFLE_SIZE).cache().prefetch(tf.data.experimental.AUTOTUNE).batch(Dataset.BATCH_SIZE)
+def configure_ds(ds: tf.data.Dataset, bsize):
+    return ds.shuffle(Dataset.SHUFFLE_SIZE).batch(bsize).cache().prefetch(tf.data.experimental.AUTOTUNE)
 
 
-def load_ds(path, name) -> Dataset:
+@log_before
+def load_ds(path, name, bsize) -> Dataset:
     train = tf.data.experimental.load(path + '/train',
-                                      element_spec=(
-                                          tf.TensorSpec(shape=(), dtype=tf.string, name=None),
-                                          tf.TensorSpec(shape=(), dtype=tf.int32, name=None)
+                                      # element_spec=(
+                                      #    tf.TensorSpec(shape=(), dtype=tf.string, name=None),
+                                      #    tf.TensorSpec(shape=(), dtype=tf.int32, name=None)
+                                      # )
                                       )
-                                      )
-    train = configure_ds(train)
+    train = configure_ds(train, bsize)
     val = tf.data.experimental.load(path + '/val',
-                                    element_spec=(
-                                        tf.TensorSpec(shape=(), dtype=tf.string, name=None),
-                                        tf.TensorSpec(shape=(), dtype=tf.int32, name=None)
+                                    # element_spec=(
+                                    #    tf.TensorSpec(shape=(), dtype=tf.string, name=None),
+                                    #    tf.TensorSpec(shape=(), dtype=tf.int32, name=None)
+                                    # )
                                     )
-                                    )
-    val = configure_ds(val)
+    val = configure_ds(val, bsize)
     class_weights = load_pickle(path + '/class_weights')
     label_mapping = load_pickle(path + '/label_mapping')
 

@@ -1,90 +1,91 @@
-swagger: "2.0"
+# API-first development with OpenAPI
+# This file will be used at compile time to generate Spring-MVC endpoint stubs using openapi-generator
+openapi: 3.0.3
 info:
-  version: "1.0.0"
-  title: "MM ML"
-basePath: "/api/06.2022:10:00"
-tags:
-  - name: mm-ml
-schemes:
-  - https
-  - http
-consumes:
-  - "application/json"
-produces:
-  - "application/json"
+    title: "mm-ml"
+    version: 0.0.1
+servers:
+    - url: http://localhost:9090/api/v1
 paths:
   /health:
     get:
       responses:
         200:
           description: "OK"
-      x-swagger-router-controller: app.rest.api
-      x-openapi-router-controller: app.rest.api
+      x-swagger-router-controller: app.service.api
+      x-openapi-router-controller: app.service.api
   /predictions:
     post:
       tags:
         - mm-ml
       summary: retrieve predictions for MM
       operationId: "predict_api"
-      parameters:
-        - in: "body"
-          name: "body"
-          description: "lmc messages"
-          required: true
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/LmcMessageIn"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/LmcMessageIn'
       responses:
-        200:
-          description: "OK"
-          schema:
-            $ref: "#/definitions/LmcMessageOut"
-      x-swagger-router-controller: app.rest.api
-      x-openapi-router-controller: app.rest.api
-definitions:
-  LmcMessageIn:
-    type: object
-    required:
-      - message
-      - is_return
-      - carrier_slug
-    properties:
-      message:
-        type: string
-      is_return:
-        type: boolean
-      carrier_slug:
-        type: string
-  EventTypePrediction:
-    properties:
-      event_type:
-        type: string
-      probability:
-        type: number
-  ShipmentStatusPrediction:
-    properties:
-      shipment_status:
-        type: string
-      probability:
-        type: number
-  LmcMessageOut:
-    required:
-      - message
-      - is_return
-      - carrier_slug
-      - shipment_status_prediction
-      - event_types_prediction
-    properties:
-      lmc_message:
-        type: string
-      is_return:
-        type: boolean
-      carrier_slug:
-        type: string
-      shipment_status_prediction:
-        $ref: '#/definitions/ShipmentStatusPrediction'
-      event_types_prediction:
-        type: array
-        items:
-          $ref: '#/definitions/EventTypePrediction'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LmcMessageOut'
+      x-swagger-router-controller: app.service.api
+      x-openapi-router-controller: app.service.api
+
+components:
+  schemas:
+    LmcMessageIn:
+      type: object
+      required:
+        - message
+        - is_return
+        - carrier_slug
+      properties:
+        message:
+          type: string
+        is_return:
+          type: boolean
+          default: false
+        carrier_slug:
+          type: string
+    EventTypePrediction:
+      properties:
+        event_type:
+          type: string
+        probability:
+          type: number
+    ShipmentStatusPrediction:
+      properties:
+        shipment_status:
+          type: string
+        probability:
+          type: number
+    LmcMessageOut:
+      required:
+        - message
+        - is_return
+        - carrier_slug
+        - shipment_status_prediction
+        - event_types_prediction
+      properties:
+        lmc_message:
+          type: string
+        is_return:
+          type: boolean
+          default: false
+        carrier_slug:
+          type: string
+        shipment_status_prediction:
+          $ref: '#/components/schemas/ShipmentStatusPrediction'
+        event_types_prediction:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventTypePrediction'

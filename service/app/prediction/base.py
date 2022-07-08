@@ -1,20 +1,13 @@
 import logging
 
+
 import tensorflow as tf
 from abc import ABC, abstractmethod
-from .config import *
-import pickle
-from pathlib import Path
-from typing import Dict
-
-from app.util import log_before
-from app.aws.s3 import download_dir
-from pathlib import Path
 from typing import Dict
 
 from shared.util import log_before, load_pickle
-from shared.aws.s3 import download_dir
-from shared.aws.config import S3_BUCKET_NAME, S3_MODEL_DIR_PREFIX
+from shared.aws.s3 import download_folder_from_s3
+from shared.config import *
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +17,9 @@ class BasePredictor(ABC):
     model: tf.keras.Model
 
     @log_before
-    def __init__(self, model_name: str):
-        self.model = self._load_model(model_name)
-        self.name_mapping = self._load_pickled_label_map(
-            f'{MODEL_FS_CACHE_DIR}/{S3_MODEL_DIR_PREFIX}/{model_name}/{LABEL_MAPPING_NAME}')
-        self.name_mapping = load_pickle(f'{MODEL_FS_CACHE_DIR}/{S3_MODEL_DIR_PREFIX}/{model_name}/{LABEL_MAPPING_NAME}')
+    def __init__(self, model_tag: str):
+        self.model = self._load_model(model_tag)
+        self.name_mapping = load_pickle(f'{APP_PATH}/{MODEL_DIR}/{model_tag}/label_mapping')
 
     @abstractmethod
     def predict_batch(self, messages):
@@ -36,19 +27,9 @@ class BasePredictor(ABC):
 
     @staticmethod
     @log_before
-    def _load_pickled_label_map(path) -> {int: str}:
-        with open(path, "rb") as file:
-            obj = pickle.load(file)
-            return obj
-
-    @staticmethod
-    @log_before
-    def _load_model(model_name):
-        keras_model_path = f'{MODEL_FS_CACHE_DIR}/{S3_MODEL_DIR_PREFIX}/{model_name}/model'
-        if Path(keras_model_path).exists():
-            log.info(f'Model already exists in {keras_model_path}')
-        else:
-            download_dir(prefix=S3_MODEL_DIR_PREFIX,
-                         local=MODEL_FS_CACHE_DIR,
-                         bucket=S3_BUCKET_NAME)
-        return tf.saved_model.load(keras_model_path)
+    def _load_model(model_tag):
+        download_folder_from_s3(
+            s3_path=f'{MODEL_DIR}/{model_tag}',
+            local=f'{APP_PATH}'
+        )
+        return tf.saved_model.load(f'{APP_PATH}/{MODEL_DIR}/{model_tag}/model')

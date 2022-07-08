@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mm-ml-train-status
+  labels:
+    app.kubernetes.io/name: mm-ml-train-status
+  namespace: datahub-dev
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: mm-ml-train-status
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 65534
+        runAsNonRoot: false
+        fsGroup: 1001
+      serviceAccountName: mm-ml
+      restartPolicy: Never
+      tolerations:
+        - key: nodegroup
+          operator: Equal
+          value: gpu_support
+          effect: NoSchedule
+      nodeSelector:
+        nodegroup: gpu_support
+        # accelerator: nvidia-tesla-v100
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - mm-ml-train-status
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: mm-ml-train
+          command: [ "python3", "app/main.py", "status"]
+          resources:
+            requests:
+              memory: 10Gi
+              nvidia.com/gpu: '1'
+            limits:
+              memory: 20Gi
+              nvidia.com/gpu: '1'
+          image: 494112235724.dkr.ecr.eu-central-1.amazonaws.com/datahub/mm-ml:dev-train-job
+          imagePullPolicy: Always
+          env:
+            - name: APP_PATH
+              value: /mm-ml
+

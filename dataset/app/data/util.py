@@ -1,9 +1,8 @@
 import tensorflow as tf
 from typing import Dict
-from datetime import datetime
 
-from ..config import DATA_PATH
-from shared.util import save_pickle, ensure_dir
+from shared import save_pickle, ensure_dir, time_stamp_tag, log_before
+from shared.config import *
 
 
 def make_dataset(x, y):
@@ -17,7 +16,7 @@ def save_ds(name: str,
             train: tf.data.Dataset,
             val: tf.data.Dataset,
             label_mapping: Dict[int, str],
-            class_weights: Dict[int, float]
+            class_weights: Dict[int, float],
             ) -> str:
     """
     :param name: name of ds
@@ -25,22 +24,26 @@ def save_ds(name: str,
     :param val: validation split
     :param label_mapping: class label to class label mapping
     :param class_weights:
-    :return: path to dir where ds is saved
+    :return: tag of ds saved
     """
     print(f'Saving {name} dataset')
-    ensure_dir(DATA_PATH)
 
-    tag = datetime.now().strftime("%m.%d:%H.%M")
+    tag = time_stamp_tag()
+    ensure_dir(f'{APP_PATH}/{DATASET_DIR}/{tag}/{name}/train')
+    ensure_dir(f'{APP_PATH}/{DATASET_DIR}/{tag}/{name}/val')
 
-    ensure_dir(f'{DATA_PATH}/{tag}')
-    ensure_dir(f'{DATA_PATH}/{tag}/{name}')
+    _save_ds(train, f'{APP_PATH}/{DATASET_DIR}/{tag}/{name}/train')
+    _save_ds(val, f'{APP_PATH}/{DATASET_DIR}/{tag}/{name}/val')
 
-    tf.data.experimental.save(train, f'{DATA_PATH}/{tag}/{name}/train')
-    tf.data.experimental.save(val, f'{DATA_PATH}/{tag}/{name}/val')
+    save_pickle(class_weights, f'{APP_PATH}/{DATASET_DIR}/{tag}/{name}/class_weights')
+    save_pickle(label_mapping, f'{APP_PATH}/{DATASET_DIR}/{tag}/{name}/label_mapping')
 
-    save_pickle(class_weights, f'{DATA_PATH}/{tag}/{name}/class_weights')
-    save_pickle(label_mapping, f'{DATA_PATH}/{tag}/{name}/label_mapping')
-    return f'{DATA_PATH}/{tag}'
+    return tag
+
+
+@log_before
+def _save_ds(ds, path):
+    tf.data.experimental.save(ds, path)
 
 
 def flip_dict(d: Dict):

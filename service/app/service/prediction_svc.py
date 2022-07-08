@@ -1,21 +1,22 @@
 from typing import List
 import logging
 from threading import Lock
+from functools import lru_cache
 
 
-from stubs.models.lmc_message_in import LmcMessageIn
-from stubs.models.lmc_message_out import LmcMessageOut
-from stubs.models.shipment_status_prediction import ShipmentStatusPrediction
-from stubs.models.event_type_prediction import EventTypePrediction
-from shared.util import log_before, log_after
-from .config import *
-from prediction.status import StatusPredictor
-from prediction.events import EventTypesPredictor
+from app.stubs.models.lmc_message_in import LmcMessageIn
+from app.stubs.models.lmc_message_out import LmcMessageOut
+from app.stubs.models.shipment_status_prediction import ShipmentStatusPrediction
+from app.stubs.models.event_type_prediction import EventTypePrediction
+from shared import log_before, log_after
+from app.prediction.status import StatusPredictor
+from app.prediction.events import EventTypesPredictor
+from app.config import SHIPMENT_STATUS_MODEL_TAG, RETURN_SHIPMENT_STATUS_MODEL_TAG, EVENT_TYPES_MODEL_TAG, RETURN_EVENT_TYPES_MODEL_TAG
 
 log = logging.getLogger(__name__)
 
 
-def _build_rest_response(message, slugs, status, events, _return):
+def _build_rest_response(message, slugs, status, events, is_return):
     status = [ShipmentStatusPrediction(shipment_status=i, probability=j) for i, j in zip(*status)]
     events_m = []
     for i in zip(*events):
@@ -25,7 +26,7 @@ def _build_rest_response(message, slugs, status, events, _return):
     res = [
         LmcMessageOut(lmc_message=m, carrier_slug=sl,
                       shipment_status_prediction=st,
-                      event_types_prediction=e, is_return=_return)
+                      event_types_prediction=e, is_return=is_return)
         for m, sl, st, e in zip(message, slugs, status, events_m)
     ]
     return res
@@ -39,16 +40,20 @@ class PredictionService:
     mutex = Lock()
 
     def __init__(self):
-        self._status_predictor = StatusPredictor(model_name=SHIPMENT_STATUS_MODEL_DIR)
-        self._return_status_predictor = StatusPredictor(model_name=RETURN_SHIPMENT_STATUS_MODEL_DIR)
-        self._event_types_predictor = EventTypesPredictor(model_name=EVENT_TYPES_MODEL_DIR)
-        self._returns_event_types_predictor = EventTypesPredictor(model_name=RETURN_EVENT_TYPES_MODEL_DIR)
+        self._status_predictor = StatusPredictor(SHIPMENT_STATUS_MODEL_TAG)
+        self._return_status_predictor = StatusPredictor(RETURN_SHIPMENT_STATUS_MODEL_TAG)
+        self._event_types_predictor = EventTypesPredictor(EVENT_TYPES_MODEL_TAG)
+        self._returns_event_types_predictor = EventTypesPredictor(RETURN_EVENT_TYPES_MODEL_TAG)
 
-    @log_before
-    @log_after
+    # @log_before
+    # @log_after
     def predict_mappings(self, req_body: List[LmcMessageIn]) -> List[LmcMessageOut]:
         self.mutex.acquire()
+        mapping = self._predict_mappings(req_body)
+        self.mutex.release()
+        return mapping
 
+    def _predict_mappings(self, req_body: List[LmcMessageIn]) -> List[LmcMessageOut]:
         outbound_messages = []
         outbound_slugs = []
         return_messages = []
@@ -67,20 +72,29 @@ class PredictionService:
             outbound_status = self._status_predictor.predict_batch(outbound_messages)
             outbound_events = self._event_types_predictor.predict_batch(outbound_messages)
 
-            res_outbound = _build_rest_response(outbound_messages, outbound_slugs, outbound_status, outbound_events,
-                                                False)
+            res_outbound = _build_rest_response(message=outbound_messages,
+                                                slugs=outbound_slugs,
+                                                status=outbound_status,
+                                                events=outbound_events,
+                                                is_return=False
+                                                )
             res += res_outbound
 
         if len(return_messages) > 0:
             return_status = self._return_status_predictor.predict_batch(return_messages)
             return_events = self._returns_event_types_predictor.predict_batch(return_messages)
 
-            res_return = _build_rest_response(return_messages, return_slugs, return_status, return_events, True)
+            res_return = _build_rest_response(message=return_messages,
+                                              slugs=return_slugs,
+                                              status=return_status,
+                                              events=return_events,
+                                              is_return=True
+                                              )
             res += res_return
 
-        self.mutex.release()
         return res
 
 
-prediction_svc = PredictionService()
-
+@lru_cache(maxsize=None)
+def prediction_service() -> PredictionService:
+    return PredictionService()

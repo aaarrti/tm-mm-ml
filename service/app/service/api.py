@@ -2,10 +2,9 @@ import logging
 
 import connexion
 import http
-
-from service.prediction_svc import prediction_svc
-from ..stubs.models.lmc_message_in import LmcMessageIn
-from ..stubs.models.lmc_message_out import LmcMessageOut
+from app.stubs.models.lmc_message_in import LmcMessageIn
+from app.stubs.models.lmc_message_out import LmcMessageOut
+from .prediction_svc import prediction_service
 
 from shared.util import log_before, log_after
 
@@ -18,14 +17,17 @@ def health_get():
 
 @log_before
 @log_after
-def predict_api(body: LmcMessageIn):
-    """retrieve predictions for MM
+def predict_api(body):
+
+    """
+    retrieve predictions for MM
     :param body: lmc messages
     :type body: list | bytes
     :rtype: Union[LmcMessageOut, Tuple[LmcMessageOut, int], Tuple[LmcMessageOut, int, Dict[str, str]]
     """
     if connexion.request.is_json:
-        body = [LmcMessageIn.from_dict(d) for d in connexion.request.get_json()]  # noqa: E501
-    res = prediction_svc.predict_mappings(body)
+        body = [LmcMessageIn.from_dict(i) for i in body]
+    pr_svc = prediction_service()
+    res = pr_svc.predict_mappings(body)
     res_dict = [LmcMessageOut.to_dict(i) for i in res]
     return res_dict, http.HTTPStatus.OK

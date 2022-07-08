@@ -1,12 +1,10 @@
-# tensorflow-cpu==2.9.1
 tensorflow-text==2.9.0
-tensorflow-hub==0.12.0
 
-boto3==1.23.10
 Flask >= 2.1.2
 
 connexion[swagger-ui] >= 2.6.0
 swagger-ui-bundle >= 0.0.2
+
 python_dateutil >= 2.6.0
 setuptools >= 21.0.0
 

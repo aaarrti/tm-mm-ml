@@ -1,8 +1,19 @@
 FROM tensorflow/tensorflow:2.9.1-gpu
 
-COPY . .
-WORKDIR /app
+WORKDIR /mm-ml
+
+COPY shared shared
+
+RUN pip install -r shared/requirements.txt
+
+COPY training training
+
+WORKDIR /mm-ml/training
 
 RUN pip install -r requirements.txt
 
-CMD ['python3', 'app/main.py', 'all']
+RUN mkdir /mm-ml/saved_data && mkdir /mm-ml/saved_models && \
+    chmod 777 -R /mm-ml/saved_data && chmod 777 -R /mm-ml/saved_models
+
+ENV PYTHONPATH=/mm-ml:/mm-ml/training
+

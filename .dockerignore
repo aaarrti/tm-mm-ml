@@ -1,6 +1,6 @@
 dataset/k8s
-saved_data
-saved_models
+training/k8s
 service/Makefile
 service/app/stubs
 service/.openapi-generator
+service/stubs

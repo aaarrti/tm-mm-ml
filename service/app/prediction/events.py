@@ -1,12 +1,14 @@
 import tensorflow as tf
 from typing import List
-from .config import EVENT_PROBABILITY_THRESHOLD
+from app.config import EVENT_PROBABILITY_THRESHOLD
 
 from .base import BasePredictor
+from shared import log_before
 
 
 class EventTypesPredictor(BasePredictor):
 
+    @log_before
     def predict_batch(self, messages) -> (List[List[str]], List[List[float]]):
         """
         :param messages: list of lmc messages

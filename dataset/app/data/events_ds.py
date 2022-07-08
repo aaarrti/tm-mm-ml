@@ -2,6 +2,7 @@ from sklearn.utils import compute_class_weight
 import numpy as np
 import tensorflow as tf
 from typing import List
+import itertools
 
 from .base_ds import Dataset
 from .util import flip_dict
@@ -21,18 +22,14 @@ class EventTypesDataset(Dataset):
 
     @staticmethod
     def _map_to_int_labels(names: [str]):
-        name_map = {}
-        int_labels = []
-        label_generator = 0
-        for i in names:
-            entry = []
-            for j in i:
-                if j not in name_map:
-                    name_map[j] = label_generator
-                    label_generator += 1
-                entry.append(name_map[j])
-            int_labels.append(entry)
-        print(f'Mapped names to labels {name_map}')
+        vocab = np.unique(flatten_list(names))
+        sl = tf.keras.layers.StringLookup(vocabulary=vocab)
+
+        ragged_tensor_names = tf.ragged.constant(names)
+        # make labels start at 0
+        int_labels = sl(ragged_tensor_names).numpy() - 1
+        name_map = {i: j for i, j in zip(np.unique(flatten_list(names)), np.unique(flatten_list(int_labels)))}
+
         return int_labels, name_map
 
     @staticmethod
@@ -66,3 +63,6 @@ class ReturnEventTypesDataset(EventTypesDataset):
         multi_hot_y = self._binarize_labels(int_y, list(name_mapping.values()))
         return X, multi_hot_y, flip_dict(name_mapping)
 
+
+def flatten_list(list2d):
+    return list(itertools.chain.from_iterable(list2d))

@@ -2,6 +2,8 @@ import inspect
 from pathlib import Path
 import functools
 import pickle
+from datetime import datetime
+from os import environ
 
 
 def log_before(func):
@@ -30,8 +32,9 @@ def log_after(func):
     return wrapper
 
 
+@log_before
 def ensure_dir(file_path):
-    Path(file_path).mkdir(exist_ok=True)
+    Path(file_path).mkdir(exist_ok=True, parents=True)
 
 
 @log_before
@@ -46,3 +49,15 @@ def load_pickle(path):
     with open(f'{path}.pickle', "rb") as file:
         obj = pickle.load(file)
         return obj
+
+
+@log_after
+def time_stamp_tag():
+    return datetime.now().strftime("%m.%d:%H.%M")
+
+
+def print_env():
+    print('-' * 50)
+    for k, v in sorted(environ.items()):
+        print(k + ':', v)
+    print('-' * 50)

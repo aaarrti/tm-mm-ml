@@ -1,13 +1,17 @@
 FROM tensorflow/tensorflow:2.9.1
 
-COPY dataset dataset
+WORKDIR /mm-ml
+
 COPY shared shared
 
+RUN pip install -r shared/requirements.txt
 
-WORKDIR /dataset
+COPY dataset dataset
+
+WORKDIR /mm-ml/dataset
 
 RUN pip install -r requirements.txt
 
-ENV PYTHONPATH=/:/dataset
+RUN mkdir /mm-ml/saved_data && chmod 777 /mm-ml/saved_data
 
-CMD [ "python3", "app/main.py", "all" ]
+ENV PYTHONPATH=/mm-ml:/mm-ml/dataset

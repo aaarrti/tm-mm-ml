@@ -1,3 +1,4 @@
+import tensorflow as tf
 from cachetools import cached
 from .base_ds import Dataset
 from sklearn.utils import class_weight
@@ -16,7 +17,6 @@ class ShipmentStatusDataset(Dataset):
         ids = [i['shipment_status_id'] for i in res]
         names = [self._query_status_name_mongo(i) for i in ids]
         int_y, name_mapping = self._map_label_name_to_int(names)
-        self.num_classes = len(names)
         return X, int_y, flip_dict(name_mapping)
 
     @cached(
@@ -28,16 +28,11 @@ class ShipmentStatusDataset(Dataset):
 
     @staticmethod
     def _map_label_name_to_int(names):
-        name_mapping = {}
-        counter = 0
-        labels = []
-        for n in names:
-            if n not in name_mapping:
-                name_mapping[n] = counter
-                counter += 1
-            labels.append(name_mapping[n])
-        print(f'Mapped names to labels {name_mapping}')
-        return labels, name_mapping
+        sl = tf.keras.layers.StringLookup(vocabulary=np.unique(names))
+        # make labels start at 0
+        int_labels = sl(names).numpy() - 1
+        name_map = {i: j for i, j in zip(np.unique(names), np.unique(int_labels))}
+        return int_labels, name_map
 
     def _compute_class_weights(self, y_train):
         class_weights = class_weight.compute_class_weight(class_weight='balanced',
@@ -57,5 +52,4 @@ class ReturnShipmentStatusDataset(ShipmentStatusDataset):
         ids = [i['return_shipment_status_id'] for i in res]
         names = [self._query_status_name_mongo(i) for i in ids]
         int_y, name_mapping = self._map_label_name_to_int(names)
-        self.num_classes = len(names)
         return X, int_y, flip_dict(name_mapping)

@@ -1,24 +1,33 @@
-FROM node as swagger
+FROM openapitools/openapi-generator-cli:v6.0.0 as swagger
 
-RUN apt update && apt install -y default-jre && npm install @openapitools/openapi-generator-cli -g
+WORKDIR /mm-ml
 
 COPY service service
-WORKDIR service
 
-RUN openapi-generator-cli generate -i openapi/api.yml -g python-flask --additional-properties=packageName=app.stubs
-WORKDIR service
+WORKDIR /mm-ml/service
 
-RUN openapi-generator-cli generate -i openapi/api.yml -g python-flask --additional-properties=packageName=app.stubs
+RUN java -jar /opt/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar generate \
+    -i openapi/api.yml -g python-flask --additional-properties=packageName=stubs,pythonSrcRoot=app
 
 
 FROM tensorflow/tensorflow:2.9.1
-COPY --from=swagger /service /service
 
-WORKDIR /service
+WORKDIR /mm-ml
+
+COPY shared shared
+
+RUN pip install -r shared/requirements.txt
+
+COPY --from=swagger /mm-ml/service /mm-ml/service
+
+WORKDIR /mm-ml/service
+
 RUN pip install -r requirements.txt
 
-WORKDIR /service/app
-ENV PYTHONPATH=/service
+RUN  mkdir /mm-ml/saved_models &&  chmod 777 -R /mm-ml/saved_models
+
+ENV PYTHONPATH=/mm-ml:/mm-ml/service
 
 EXPOSE 9090
-CMD [ "python3", "main.py" ]
+
+CMD [ "python3", "app/main.py" ]

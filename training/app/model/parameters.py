@@ -1,29 +1,35 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
+import tensorflow_model_optimization as tfmot
+from dataclasses import dataclass
 
 
+@dataclass
 class TrainingHyperParameters:
-    EPOCHS = 30
-    BATCH_SIZE = 32
-    DROP_OUT_RATE = 0.2
+    epochs: int
+    batch_size: int
+    base_lr: int
     numClasses: int
+
+    DROP_OUT_RATE = 0.2
+
     TRAIN_CALLBACKS = [
         tf.keras.callbacks.TerminateOnNaN(),
         tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', min_delta=0.01, factor=0.2, patience=5, min_lr=1e-6),
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, min_delta=0.001),
-        tfa.callbacks.TQDMProgressBar()
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, min_delta=0.001),
+        # tfa.callbacks.TQDMProgressBar()
     ]
-
-    def __init__(self, num_classes: int):
-        self.numClasses = num_classes
 
 
 class NNHyperParameters:
     LOSS: str
-    LR = 3e-5
-    OPTIMIZER = tf.keras.optimizers.Adam(LR)
     METRIC: [str]
     ACTIVATION: str
+
+
+clustering_params = {
+  'number_of_clusters': 256,
+  'cluster_centroids_init': tfmot.clustering.keras.CentroidInitialization.LINEAR
+}
 
 
 class ShipmentStatusNNHyperParameters(NNHyperParameters):

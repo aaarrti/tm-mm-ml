@@ -1,13 +1,24 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: training-job
+  name: mm-ml-train-return-status
+  labels:
+    app.kubernetes.io/name: mm-ml-train-return-status
+  namespace: datahub-dev
 spec:
   completions: 1
   parallelism: 1
   template:
+    metadata:
+      labels:
+        app: mm-ml-train-return-status
     spec:
-      serviceAccountName: datahub-dev
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 65534
+        runAsNonRoot: false
+        fsGroup: 1001
+      serviceAccountName: mm-ml
       restartPolicy: Never
       tolerations:
         - key: nodegroup
@@ -16,6 +27,7 @@ spec:
           effect: NoSchedule
       nodeSelector:
         nodegroup: gpu_support
+        # accelerator: nvidia-tesla-v100
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -24,10 +36,11 @@ spec:
                   - key: app.kubernetes.io/name
                     operator: In
                     values:
-                      - gpu-test
+                      - mm-ml-train-return-status
               topologyKey: kubernetes.io/hostname
       containers:
-        - name: train-job
+        - name: mm-ml-train
+          command: [ "python3", "app/main.py", "return-status"]
           resources:
             requests:
               memory: 10Gi
@@ -36,11 +49,8 @@ spec:
               memory: 20Gi
               nvidia.com/gpu: '1'
           image: 494112235724.dkr.ecr.eu-central-1.amazonaws.com/datahub/mm-ml:dev-train-job
+          imagePullPolicy: Always
           env:
-            - name: S3_BUCKET_NAME
-              value: datahub-mm-ml
-            - name: S3_MODEL_DIR_PREFIX'
-              value: saved_models
-            - name: MODEL_DIR
-              value: /saved_models
+            - name: APP_PATH
+              value: /mm-ml
 

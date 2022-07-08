@@ -2,6 +2,8 @@ import boto3
 import os
 import logging
 
+from shared.config import AWS_ROLE_NAME
+
 
 log = logging.getLogger(__name__)
 
@@ -14,10 +16,13 @@ def auth():
     if 'AWS_WEB_IDENTITY_TOKEN_FILE' in os.environ:
         log.info('AUTH with service account')
         return auth_with_service_account()
-    if 'AWS_ACCESS_KEY_ID' in os.environ:
-        log.info('Auth with AWS keys')
-        return os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'], os.environ['AWS_SESSION_TOKEN']
-    raise Exception('No AWS auth')
+    log.info('Auth with SSO')
+    return auth_with_sso()
+
+
+def auth_with_sso():
+    sess = boto3.Session(profile_name=AWS_ROLE_NAME).get_credentials().get_frozen_credentials()
+    return sess.access_key, sess.secret_key, sess.token
 
 
 def auth_with_service_account():

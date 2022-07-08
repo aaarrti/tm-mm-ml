@@ -14,5 +14,5 @@ stubs:
 	-g python-flask \
 	--additional-properties=\
 	pythonSrcRoot=app,\
-	packageName=app.stubs,\
-	serverPort=9090
+	packageName=stubs
+

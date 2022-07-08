@@ -1,6 +1,8 @@
 import logging
 import boto3
-from .config import *
+
+
+from app.config import SQS_BATCH_SIZE, SQS_MESSAGE_ATTRIBUTES, SQS_MESSAGE_WAIT_TIME_SEC, IN_QUEUE_NAME, OUT_QUEUE_NAME, USE_ELASTIC_MQ
 from shared.aws.auth import auth
 from shared.util import log_before, log_after
 from typing import List, Dict
@@ -93,11 +95,12 @@ def sqs_client():
                               aws_access_key_id='x'
                               )
     else:
-        key, secret, token = auth()
+        acces_key, secret_key, session_id = auth()
         return boto3.resource('sqs',
-                              aws_secret_access_key=key,
-                              aws_access_key_id=secret,
-                              aws_session_token=token
+                              aws_access_key_id=acces_key,
+                              aws_secret_access_key=secret_key,
+                              aws_session_token=session_id,
+                              region_name='eu-central-1',
                               )
 
 

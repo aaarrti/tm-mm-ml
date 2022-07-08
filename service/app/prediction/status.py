@@ -2,10 +2,12 @@ import tensorflow as tf
 from typing import List
 
 from .base import BasePredictor
+from shared import log_before
 
 
 class StatusPredictor(BasePredictor):
 
+    @log_before
     def predict_batch(self, messages: List[str]) -> (List[str], List[float]):
         """
         :param messages: List of lmc_messages

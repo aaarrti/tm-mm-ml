@@ -1,10 +1,9 @@
-from datetime import datetime
+from shared import time_stamp_tag, log_after
 
 
+@log_after
 def name_model(ds) -> str:
-    # Since there is no versioning in S3, let's prefix model with day + time
-    now = datetime.now()
-    postfix = now.strftime("%m.%d:%H.%M")
+    postfix = time_stamp_tag()
     name = f'{ds.name}_la_{postfix}'
     print(f'Named model {name}')
     return name
